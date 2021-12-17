@@ -1,0 +1,28 @@
+syntax = "proto3";
+package port;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/kntajus/sampleapp/protos";
+
+service PortDomainService {
+    rpc UpdatePorts(stream PortWithID) returns (google.protobuf.Empty);
+}
+
+message PortWithID {
+  string id = 1;
+  Port port = 2;
+}
+
+message Port {
+  string name = 1;
+  repeated double coordinates = 2;
+  string city = 3;
+  string province = 4;
+  string country = 5;
+  repeated string alias = 6;
+  repeated string regions = 7;
+  string timezone = 8;
+  repeated string unlocs = 9;
+  string code = 10;
+}
