@@ -24,12 +24,14 @@ var getPortURLFormat = regexp.MustCompile("^/ports/[A-Z]{5}$")
 type Server struct {
 	portClient protos.PortDomainServiceClient
 	server     *http.Server
+	dataFile   string
 }
 
 func New(portClient protos.PortDomainServiceClient) *Server {
 	return &Server{
 		portClient: portClient,
 		server:     &http.Server{Addr: ":8080"},
+		dataFile:   "/data/ports.json",
 	}
 }
 
@@ -53,7 +55,7 @@ func (s *Server) updatePorts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, err := os.Open("/data/ports.json")
+	file, err := os.Open(s.dataFile)
 	if err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusInternalServerError)
