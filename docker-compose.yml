@@ -1,5 +1,14 @@
 version: "3.9"
 services:
+  api:
+    build:
+      dockerfile: api/Dockerfile
+    volumes:
+      - ./data:/data:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      - "ports"
   ports:
     build:
       dockerfile: ports/Dockerfile
