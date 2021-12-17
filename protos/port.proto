@@ -6,7 +6,8 @@ import "google/protobuf/empty.proto";
 option go_package = "github.com/kntajus/sampleapp/protos";
 
 service PortDomainService {
-    rpc UpdatePorts(stream PortWithID) returns (google.protobuf.Empty);
+  rpc UpdatePorts(stream PortWithID) returns (google.protobuf.Empty);
+  rpc GetPort(GetPortRequest) returns (GetPortResponse);
 }
 
 message PortWithID {
@@ -25,4 +26,12 @@ message Port {
   string timezone = 8;
   repeated string unlocs = 9;
   string code = 10;
+}
+
+message GetPortRequest {
+  string id = 1;
+}
+
+message GetPortResponse {
+  Port port = 1;
 }

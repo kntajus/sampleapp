@@ -60,9 +60,59 @@ func TestUpdatePorts(t *testing.T) {
 
 			assert.NoError(t, err)
 			for id, port := range test.expectedStored {
-				storedPort := test.store.(*store.Map).GetPort(id)
+				storedPort, err := test.store.GetPort(context.Background(), id)
+				assert.NoError(t, err)
 				assert.Equal(t, port, storedPort)
 			}
+		})
+	}
+}
+
+func TestGetPort(t *testing.T) {
+	tests := map[string]struct {
+		store        server.PortStore
+		initialData  []*protos.PortWithID
+		queryID      string
+		expectedName string
+		expectedErr  string
+	}{
+		"Success": {
+			store: store.NewMap(),
+			initialData: []*protos.PortWithID{
+				{Id: "ABCDE", Port: &protos.Port{Name: "Alphabet"}},
+				{Id: "POROP", Port: &protos.Port{Name: "Palindrome"}},
+				{Id: "ZYXWV", Port: &protos.Port{Name: "Tebahpla"}},
+			},
+			queryID:      "POROP",
+			expectedName: "Palindrome",
+		},
+		"Store Error": {
+			store:       &mockStore{getError: errors.New("broken store")},
+			queryID:     "NEVER",
+			expectedErr: "broken store",
+		},
+		"Not Found": {
+			store:       &mockStore{getError: store.ErrNotFound},
+			queryID:     "NEVER",
+			expectedErr: "code = NotFound desc = unknown port identifier",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			s := server.New(test.store)
+			for _, d := range test.initialData {
+				test.store.UpsertPort(context.Background(), d)
+			}
+
+			resp, err := s.GetPort(context.Background(), &protos.GetPortRequest{Id: test.queryID})
+			if test.expectedErr != "" {
+				assert.Contains(t, err.Error(), test.expectedErr)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedName, resp.GetPort().GetName())
 		})
 	}
 }
@@ -89,6 +139,8 @@ func (m *mockUpdatePortsServer) SendAndClose(*emptypb.Empty) error { return nil 
 
 type mockStore struct {
 	upsertError error
+	getError    error
 }
 
-func (b *mockStore) UpsertPort(context.Context, *protos.PortWithID) error { return b.upsertError }
+func (b *mockStore) UpsertPort(context.Context, *protos.PortWithID) error  { return b.upsertError }
+func (b *mockStore) GetPort(context.Context, string) (*protos.Port, error) { return nil, b.getError }

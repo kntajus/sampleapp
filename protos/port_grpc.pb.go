@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PortDomainServiceClient interface {
 	UpdatePorts(ctx context.Context, opts ...grpc.CallOption) (PortDomainService_UpdatePortsClient, error)
+	GetPort(ctx context.Context, in *GetPortRequest, opts ...grpc.CallOption) (*GetPortResponse, error)
 }
 
 type portDomainServiceClient struct {
@@ -64,11 +65,21 @@ func (x *portDomainServiceUpdatePortsClient) CloseAndRecv() (*emptypb.Empty, err
 	return m, nil
 }
 
+func (c *portDomainServiceClient) GetPort(ctx context.Context, in *GetPortRequest, opts ...grpc.CallOption) (*GetPortResponse, error) {
+	out := new(GetPortResponse)
+	err := c.cc.Invoke(ctx, "/port.PortDomainService/GetPort", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PortDomainServiceServer is the server API for PortDomainService service.
 // All implementations must embed UnimplementedPortDomainServiceServer
 // for forward compatibility
 type PortDomainServiceServer interface {
 	UpdatePorts(PortDomainService_UpdatePortsServer) error
+	GetPort(context.Context, *GetPortRequest) (*GetPortResponse, error)
 	mustEmbedUnimplementedPortDomainServiceServer()
 }
 
@@ -78,6 +89,9 @@ type UnimplementedPortDomainServiceServer struct {
 
 func (UnimplementedPortDomainServiceServer) UpdatePorts(PortDomainService_UpdatePortsServer) error {
 	return status.Errorf(codes.Unimplemented, "method UpdatePorts not implemented")
+}
+func (UnimplementedPortDomainServiceServer) GetPort(context.Context, *GetPortRequest) (*GetPortResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPort not implemented")
 }
 func (UnimplementedPortDomainServiceServer) mustEmbedUnimplementedPortDomainServiceServer() {}
 
@@ -118,13 +132,36 @@ func (x *portDomainServiceUpdatePortsServer) Recv() (*PortWithID, error) {
 	return m, nil
 }
 
+func _PortDomainService_GetPort_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPortRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PortDomainServiceServer).GetPort(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/port.PortDomainService/GetPort",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PortDomainServiceServer).GetPort(ctx, req.(*GetPortRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PortDomainService_ServiceDesc is the grpc.ServiceDesc for PortDomainService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var PortDomainService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "port.PortDomainService",
 	HandlerType: (*PortDomainServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetPort",
+			Handler:    _PortDomainService_GetPort_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "UpdatePorts",

@@ -19,6 +19,10 @@ func (m *Map) UpsertPort(_ context.Context, port *protos.PortWithID) error {
 	return nil
 }
 
-func (m *Map) GetPort(id string) *protos.Port {
-	return m.ports[id]
+func (m *Map) GetPort(_ context.Context, id string) (*protos.Port, error) {
+	p, ok := m.ports[id]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	return p, nil
 }
